@@ -32,8 +32,8 @@ export default css`
   justify-content: space-between;
   flex-direction: row;
 }
-.nav-bar.read .nav-bar-tag-icon {
-  display:none;
+.nav-bar .nav-bar-tag-icon {
+  // display:none;
 }
 
 .nav-bar-tag-icon {
@@ -43,10 +43,10 @@ export default css`
 .nav-bar-tag-icon:hover {
   color:var(--nav-hover-text-color);
 }
-.nav-bar.focused .nav-bar-tag-and-paths.collapsed .nav-bar-paths-under-tag {
+.nav-bar-tag-and-paths.collapsed .nav-bar-paths-under-tag {
   display:none;
 }
-.nav-bar.focused .nav-bar-tag-and-paths.collapsed .nav-bar-tag-icon::after {
+.nav-bar .nav-bar-tag-and-paths.collapsed .nav-bar-tag-icon::after {
   content: '⌵';
   width:16px;
   height:16px;
@@ -55,7 +55,7 @@ export default css`
   transform: rotate(-90deg);
   transition: transform 0.2s ease-out 0s;
 }
-.nav-bar.focused .nav-bar-tag-and-paths.expanded .nav-bar-tag-icon::after {
+.nav-bar .nav-bar-tag-and-paths.expanded .nav-bar-tag-icon::after {
   content: '⌵';
   width:16px;
   height:16px;

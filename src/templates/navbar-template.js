@@ -149,12 +149,8 @@ export default function navbarTemplate() {
 
       <div id='link-operations-top' class='nav-bar-section operations' data-content-id='operations-top' @click = '${(e) => this.scrollToEventTarget(e, false)}'>
         <div style="font-size:16px; display:flex; margin-left:10px;">
-          ${this.renderStyle === 'focused'
-            ? html`
               <div @click="${(e) => { onExpandCollapseAll.call(this, e, 'expand-all'); }}" title="Expand all" style="transform: rotate(90deg); cursor:pointer; margin-right:10px;">▸</div>
-              <div @click="${(e) => { onExpandCollapseAll.call(this, e, 'collapse-all'); }}" title="Collapse all" style="transform: rotate(270deg); cursor:pointer;">▸</div>`
-            : ''
-          }  
+              <div @click="${(e) => { onExpandCollapseAll.call(this, e, 'collapse-all'); }}" title="Collapse all" style="transform: rotate(270deg); cursor:pointer;">▸</div>
         </div>
         <div class='nav-bar-section-title'> OPERATIONS </div>
       </div>
@@ -165,7 +161,6 @@ export default function navbarTemplate() {
           <div style="${group.tags.length === 1 ? 'display:none' : ''}" class="${group.tags.length > 1 ? 'nav-bar-tag' : ''} ">${group.name}</div>
           <div style="${group.tags.length > 1 ? 'margin-left:1em' : ''}">
             ${group.tags
-              .filter((tag) => tag.paths.filter((path) => pathIsInSearch(this.matchPaths, path, this.matchType)).length)
               .map((tag) => html`
                 <div class='nav-bar-tag-and-paths ${tag.expanded ? 'expanded' : 'collapsed'}'>
                   ${tag.name === 'General ⦂'
@@ -177,18 +172,12 @@ export default function navbarTemplate() {
                         data-content-id='${tag.elementId}'
                         data-first-path-id='${tag.firstPathId}'
                         @click='${(e) => {
-                          if (this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse') {
-                            onExpandCollapse.call(this, e);
-                          } else {
-                            this.scrollToEventTarget(e, false);
-                          }
+                              this.scrollToEventTarget(e, false);
                         }}'
                       >
                         <div>${tag.name}</div>
                         <div class="nav-bar-tag-icon" @click="${(e) => {
-                          if (this.renderStyle === 'focused' && this.onNavTagClick === 'show-description') {
                             onExpandCollapse.call(this, e);
-                          }
                         }}">
                         </div>
                       </div>

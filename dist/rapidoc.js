@@ -3803,8 +3803,8 @@ pre[class*="language-"] {
   justify-content: space-between;
   flex-direction: row;
 }
-.nav-bar.read .nav-bar-tag-icon {
-  display:none;
+.nav-bar .nav-bar-tag-icon {
+  // display:none;
 }
 
 .nav-bar-tag-icon {
@@ -3814,10 +3814,10 @@ pre[class*="language-"] {
 .nav-bar-tag-icon:hover {
   color:var(--nav-hover-text-color);
 }
-.nav-bar.focused .nav-bar-tag-and-paths.collapsed .nav-bar-paths-under-tag {
+.nav-bar-tag-and-paths.collapsed .nav-bar-paths-under-tag {
   display:none;
 }
-.nav-bar.focused .nav-bar-tag-and-paths.collapsed .nav-bar-tag-icon::after {
+.nav-bar .nav-bar-tag-and-paths.collapsed .nav-bar-tag-icon::after {
   content: '⌵';
   width:16px;
   height:16px;
@@ -3826,7 +3826,7 @@ pre[class*="language-"] {
   transform: rotate(-90deg);
   transition: transform 0.2s ease-out 0s;
 }
-.nav-bar.focused .nav-bar-tag-and-paths.expanded .nav-bar-tag-icon::after {
+.nav-bar .nav-bar-tag-and-paths.expanded .nav-bar-tag-icon::after {
   content: '⌵';
   width:16px;
   height:16px;
@@ -33186,13 +33186,12 @@ function navbarTemplate() {
 
       <div id='link-operations-top' class='nav-bar-section operations' data-content-id='operations-top' @click = '${e => this.scrollToEventTarget(e, false)}'>
         <div style="font-size:16px; display:flex; margin-left:10px;">
-          ${this.renderStyle === 'focused' || true ? $`
               <div @click="${e => {
     onExpandCollapseAll.call(this, e, 'expand-all');
   }}" title="Expand all" style="transform: rotate(90deg); cursor:pointer; margin-right:10px;">▸</div>
               <div @click="${e => {
     onExpandCollapseAll.call(this, e, 'collapse-all');
-  }}" title="Collapse all" style="transform: rotate(270deg); cursor:pointer;">▸</div>` : 0}  
+  }}" title="Collapse all" style="transform: rotate(270deg); cursor:pointer;">▸</div>
         </div>
         <div class='nav-bar-section-title'> OPERATIONS </div>
       </div>
@@ -33201,7 +33200,7 @@ function navbarTemplate() {
       ${groupedTags.map(group => $`<div>
           <div style="${group.tags.length === 1 ? 'display:none' : ''}" class="${group.tags.length > 1 ? 'nav-bar-tag' : ''} ">${group.name}</div>
           <div style="${group.tags.length > 1 ? 'margin-left:1em' : ''}">
-            ${group.tags.filter(tag => tag.paths.filter(path => pathIsInSearch(this.matchPaths, path, this.matchType)).length).map(tag => $`
+            ${group.tags.map(tag => $`
                 <div class='nav-bar-tag-and-paths ${tag.expanded ? 'expanded' : 'collapsed'}'>
                   ${tag.name === 'General ⦂' ? $`<hr style="border:none; border-top: 1px dotted var(--nav-text-color); opacity:0.3; margin:-1px 0 0 0;"/>` : $`
                       <div 
@@ -33210,24 +33209,18 @@ function navbarTemplate() {
                         data-content-id='${tag.elementId}'
                         data-first-path-id='${tag.firstPathId}'
                         @click='${e => {
-    if ((this.renderStyle === 'focused' || true) && this.onNavTagClick === 'expand-collapse') {
-      onExpandCollapse.call(this, e);
-    } else {
-      this.scrollToEventTarget(e, false);
-    }
+    this.scrollToEventTarget(e, false);
   }}'
                       >
                         <div>${tag.name}</div>
                         <div class="nav-bar-tag-icon" @click="${e => {
-    if ((this.renderStyle === 'focused' || true) && this.onNavTagClick === 'show-description') {
-      onExpandCollapse.call(this, e);
-    }
+    onExpandCollapse.call(this, e);
   }}">
                         </div>
                       </div>
                     `}
                   ${this.infoDescriptionHeadingsInNavBar === 'true' ? $`
-                      ${(this.renderStyle === 'focused' || true) && this.onNavTagClick === 'expand-collapse' ? '' : $`
+                      ${this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse' ? '' : $`
                           <div class='tag-headers'>
                             ${tag.headers.map(header => $`
                             <div 
@@ -33273,7 +33266,7 @@ function navbarTemplate() {
      
 
       <!-- COMPONENTS -->
-      ${this.resolvedSpec.components && this.showComponents === 'true' && (this.renderStyle === 'focused' || true) ? $`
+      ${this.resolvedSpec.components && this.showComponents === 'true' && this.renderStyle === 'focused' ? $`
           <div id='link-components' class='nav-bar-section components'>
             <div></div>
             <div class='nav-bar-section-title'>COMPONENTS</div>
@@ -40193,7 +40186,7 @@ Prism.languages.js = Prism.languages.javascript;
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("044d2053b4aebe239106")
+/******/ 		__webpack_require__.h = () => ("e5f7373da22b830023f8")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */
