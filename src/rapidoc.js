@@ -341,10 +341,13 @@ export default class RapiDoc extends LitElement {
       .nav-method.as-colored-text.head, .nav-method.as-colored-text.patch, .nav-method.as-colored-text.options { color:var(--nav-head-color); }
       
       .nav-method.as-colored-block {
-        padding: 1px 4px;
-        min-width: 30px;
-        border-radius: 4px 0 0 4px;
+        padding: 0px 5px;
+        min-width: 5ch;
+        border-radius: 4px;
         color: #000;
+        opacity: 0.7;
+        text-align: center;
+        margin-right: 1ch;
       }
 
       .nav-method.as-colored-block.get { background-color: var(--blue); }
@@ -387,10 +390,10 @@ export default class RapiDoc extends LitElement {
           display:flex;
         }
         .section-gap--focused-mode { 
-          padding: 12px 80px 12px 80px; 
+          padding: 12px 30px 12px 30px;
         }
         .section-gap--read-mode { 
-          padding: 24px 80px 12px 80px; 
+          padding: 24px 30px 12px 30px;
         }
       }`,
       CustomStyles,

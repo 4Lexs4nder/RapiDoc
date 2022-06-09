@@ -33106,11 +33106,34 @@ function navbarTemplate() {
     `;
   }
 
+  const straightTags = this.resolvedSpec.tags.filter(tag => tag.paths.filter(path => pathIsInSearch(this.matchPaths, path, this.matchType)).length);
+  const groupedTags = Object.values(straightTags.reduce((pv, tag) => {
+    const [groupName, ...tagName] = tag.name.split(' - ');
+
+    if (pv[groupName]) {
+      pv[groupName].tags.push({ ...tag,
+        ...{
+          name: tagName.join(' - ')
+        }
+      });
+    } else {
+      pv[groupName] = {
+        name: groupName,
+        tags: [{ ...tag,
+          ...{
+            name: tagName.join(' - ')
+          }
+        }]
+      };
+    }
+
+    return pv;
+  }, {}));
   return $`
   <nav class='nav-bar ${this.renderStyle}' part="section-navbar">
     <slot name="nav-logo" class="logo"></slot>
     ${this.allowSearch === 'false' && this.allowAdvancedSearch === 'false' ? '' : $`
-        <div style="display:flex; flex-direction:row; justify-content:center; align-items:stretch; padding:8px 24px 12px 24px; ${this.allowAdvancedSearch === 'false' ? 'border-bottom: 1px solid var(--nav-hover-bg-color)' : ''}">
+        <div style="display:flex; flex-direction:row; justify-content:center; align-items:stretch; padding:8px 12px 12px 12px; ${this.allowAdvancedSearch === 'false' ? 'border-bottom: 1px solid var(--nav-hover-bg-color)' : ''}">
           ${this.allowSearch === 'false' ? '' : $`
               <div style="display:flex; flex:1; line-height:22px;">
                 <input id="nav-bar-search" 
@@ -33124,7 +33147,7 @@ function navbarTemplate() {
                 <div style="margin: 6px 5px 0 -24px; font-size:var(--font-size-regular); cursor:pointer;">&#x21a9;</div>
               </div>  
               ${this.matchPaths ? $`
-                  <button @click = '${this.onClearSearch}' class="m-btn thin-border" style="margin-left:5px; color:var(--nav-text-color); width:75px; padding:6px 8px;" part="btn btn-outline btn-clear-filter">
+                  <button @click = '${this.onClearSearch}' class="m-btn thin-border" style="margin-left:5px; color:var(--nav-text-color); width:75px; padding:8px 14px;" part="btn btn-outline btn-clear-filter">
                     CLEAR
                   </button>` : ''}
             `}
@@ -33163,88 +33186,94 @@ function navbarTemplate() {
 
       <div id='link-operations-top' class='nav-bar-section operations' data-content-id='operations-top' @click = '${e => this.scrollToEventTarget(e, false)}'>
         <div style="font-size:16px; display:flex; margin-left:10px;">
-          ${this.renderStyle === 'focused' ? $`
+          ${this.renderStyle === 'focused' || true ? $`
               <div @click="${e => {
     onExpandCollapseAll.call(this, e, 'expand-all');
   }}" title="Expand all" style="transform: rotate(90deg); cursor:pointer; margin-right:10px;">▸</div>
               <div @click="${e => {
     onExpandCollapseAll.call(this, e, 'collapse-all');
-  }}" title="Collapse all" style="transform: rotate(270deg); cursor:pointer;">▸</div>` : ''}  
+  }}" title="Collapse all" style="transform: rotate(270deg); cursor:pointer;">▸</div>` : 0}  
         </div>
         <div class='nav-bar-section-title'> OPERATIONS </div>
       </div>
 
       <!-- TAGS AND PATHS-->
-      ${this.resolvedSpec.tags.filter(tag => tag.paths.filter(path => pathIsInSearch(this.matchPaths, path, this.matchType)).length).map(tag => $`
-          <div class='nav-bar-tag-and-paths ${tag.expanded ? 'expanded' : 'collapsed'}'>
-            ${tag.name === 'General ⦂' ? $`<hr style="border:none; border-top: 1px dotted var(--nav-text-color); opacity:0.3; margin:-1px 0 0 0;"/>` : $`
-                <div 
-                  class='nav-bar-tag' 
-                  id="link-${tag.elementId}" 
-                  data-content-id='${tag.elementId}'
-                  data-first-path-id='${tag.firstPathId}'
-                  @click='${e => {
-    if (this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse') {
+      ${groupedTags.map(group => $`<div>
+          <div style="${group.tags.length === 1 ? 'display:none' : ''}" class="${group.tags.length > 1 ? 'nav-bar-tag' : ''} ">${group.name}</div>
+          <div style="${group.tags.length > 1 ? 'margin-left:1em' : ''}">
+            ${group.tags.filter(tag => tag.paths.filter(path => pathIsInSearch(this.matchPaths, path, this.matchType)).length).map(tag => $`
+                <div class='nav-bar-tag-and-paths ${tag.expanded ? 'expanded' : 'collapsed'}'>
+                  ${tag.name === 'General ⦂' ? $`<hr style="border:none; border-top: 1px dotted var(--nav-text-color); opacity:0.3; margin:-1px 0 0 0;"/>` : $`
+                      <div 
+                        class='nav-bar-tag' 
+                        id="link-${tag.elementId}" 
+                        data-content-id='${tag.elementId}'
+                        data-first-path-id='${tag.firstPathId}'
+                        @click='${e => {
+    if ((this.renderStyle === 'focused' || true) && this.onNavTagClick === 'expand-collapse') {
       onExpandCollapse.call(this, e);
     } else {
       this.scrollToEventTarget(e, false);
     }
   }}'
-                >
-                  <div>${tag.name}</div>
-                  <div class="nav-bar-tag-icon" @click="${e => {
-    if (this.renderStyle === 'focused' && this.onNavTagClick === 'show-description') {
+                      >
+                        <div>${tag.name}</div>
+                        <div class="nav-bar-tag-icon" @click="${e => {
+    if ((this.renderStyle === 'focused' || true) && this.onNavTagClick === 'show-description') {
       onExpandCollapse.call(this, e);
     }
   }}">
-                  </div>
-                </div>
-              `}
-            ${this.infoDescriptionHeadingsInNavBar === 'true' ? $`
-                ${this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse' ? '' : $`
-                    <div class='tag-headers'>
-                      ${tag.headers.map(header => $`
-                      <div 
-                        class='nav-bar-h${header.depth}' 
-                        id="link-${tag.elementId}--${new marked.Slugger().slug(header.text)}"  
-                        data-content-id='${tag.elementId}--${new marked.Slugger().slug(header.text)}' 
-                        @click='${e => this.scrollToEventTarget(e, false)}'
-                      > ${header.text}</div>`)}
-                    </div>`}` : ''}
-
-            
-            <div class='nav-bar-paths-under-tag'>
-              <!-- Paths in each tag (endpoints) -->
-              ${tag.paths.filter(v => {
+                        </div>
+                      </div>
+                    `}
+                  ${this.infoDescriptionHeadingsInNavBar === 'true' ? $`
+                      ${(this.renderStyle === 'focused' || true) && this.onNavTagClick === 'expand-collapse' ? '' : $`
+                          <div class='tag-headers'>
+                            ${tag.headers.map(header => $`
+                            <div 
+                              class='nav-bar-h${header.depth}' 
+                              id="link-${tag.elementId}--${new marked.Slugger().slug(header.text)}"  
+                              data-content-id='${tag.elementId}--${new marked.Slugger().slug(header.text)}' 
+                              @click='${e => this.scrollToEventTarget(e, false)}'
+                            > ${header.text}</div>`)}
+                          </div>`}` : ''}
+      
+                  
+                  <div class='nav-bar-paths-under-tag'>
+                    <!-- Paths in each tag (endpoints) -->
+                    ${tag.paths.filter(v => {
     if (this.matchPaths) {
       return pathIsInSearch(this.matchPaths, v, this.matchType);
     }
 
     return true;
   }).map(p => $`
-              <div 
-                class='nav-bar-path
-                ${this.usePathInNavBar === 'true' ? 'small-font' : ''}'
-                data-content-id='${p.elementId}'
-                id='link-${p.elementId}'
-                @click = '${e => {
+                    <div 
+                      class='nav-bar-path
+                      ${this.usePathInNavBar === 'true' ? 'small-font' : ''}'
+                      data-content-id='${p.elementId}'
+                      id='link-${p.elementId}'
+                      @click = '${e => {
     this.scrollToEventTarget(e, false);
   }}'
-              >
-                <span style = "display:flex; align-items:start; ${p.deprecated ? 'filter:opacity(0.5)' : ''}">
-                  ${$`<span class="nav-method ${this.showMethodInNavBar} ${p.method}">
-                      ${this.showMethodInNavBar === 'as-colored-block' ? p.method.substring(0, 3).toUpperCase() : p.method.toUpperCase()}
-                    </span>`}
-                  ${p.isWebhook ? $`<span style="font-weight:bold; margin-right:8px; font-size: calc(var(--font-size-small) - 2px)">WEBHOOK</span>` : ''}
-                  ${this.usePathInNavBar === 'true' ? $`<span class='mono-font'>${p.path}</span>` : p.summary || p.shortSummary}
-                </span>
-              </div>`)}
-            </div>
+                    >
+                      <span style = "display:flex; align-items:start; ${p.deprecated ? 'filter:opacity(0.5)' : ''}">
+                        ${$`<span class="nav-method ${this.showMethodInNavBar} ${p.method}">
+                            ${this.showMethodInNavBar === 'as-colored-block' ? p.method.substring(0, 3).toUpperCase() : p.method.toUpperCase()}
+                          </span>`}
+                        ${p.isWebhook ? $`<span style="font-weight:bold; margin-right:8px; font-size: calc(var(--font-size-small) - 2px)">WEBHOOK</span>` : ''}
+                        ${this.usePathInNavBar === 'true' ? $`<span class='mono-font'>${p.path}</span>` : p.summary || p.shortSummary}
+                      </span>
+                    </div>`)}
+                  </div>
+                </div>
+              `)}
           </div>
-        `)}
+        </div>`)}
+     
 
       <!-- COMPONENTS -->
-      ${this.resolvedSpec.components && this.showComponents === 'true' && this.renderStyle === 'focused' ? $`
+      ${this.resolvedSpec.components && this.showComponents === 'true' && (this.renderStyle === 'focused' || true) ? $`
           <div id='link-components' class='nav-bar-section components'>
             <div></div>
             <div class='nav-bar-section-title'>COMPONENTS</div>
@@ -34897,10 +34926,13 @@ class RapiDoc extends lit_element_s {
       .nav-method.as-colored-text.head, .nav-method.as-colored-text.patch, .nav-method.as-colored-text.options { color:var(--nav-head-color); }
       
       .nav-method.as-colored-block {
-        padding: 1px 4px;
-        min-width: 30px;
-        border-radius: 4px 0 0 4px;
+        padding: 0px 5px;
+        min-width: 5ch;
+        border-radius: 4px;
         color: #000;
+        opacity: 0.7;
+        text-align: center;
+        margin-right: 1ch;
       }
 
       .nav-method.as-colored-block.get { background-color: var(--blue); }
@@ -34943,10 +34975,10 @@ class RapiDoc extends lit_element_s {
           display:flex;
         }
         .section-gap--focused-mode { 
-          padding: 12px 80px 12px 80px; 
+          padding: 12px 30px 12px 30px;
         }
         .section-gap--read-mode { 
-          padding: 24px 80px 12px 80px; 
+          padding: 24px 30px 12px 30px;
         }
       }`, custom_styles];
   } // Startup
@@ -40161,7 +40193,7 @@ Prism.languages.js = Prism.languages.javascript;
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("ece16f9000df7b36c875")
+/******/ 		__webpack_require__.h = () => ("044d2053b4aebe239106")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */

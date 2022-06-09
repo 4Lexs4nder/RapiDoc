@@ -44,13 +44,33 @@ export default function navbarTemplate() {
       </nav>
     `;
   }
+
+  const straightTags = this.resolvedSpec.tags.filter((tag) => tag.paths.filter((path) => pathIsInSearch(this.matchPaths, path, this.matchType)).length);
+
+  const groupedTags = Object.values(
+    straightTags.reduce((pv, tag) => {
+      const [groupName, ...tagName] = tag.name.split(' - ');
+
+      if (pv[groupName]) {
+        pv[groupName].tags.push({ ...tag, ...{ name: tagName.join(' - ') } });
+      } else {
+        pv[groupName] = {
+          name: groupName,
+          tags: [{ ...tag, ...{ name: tagName.join(' - ') } }],
+        };
+      }
+
+      return pv;
+    }, {}),
+  );
+
   return html`
   <nav class='nav-bar ${this.renderStyle}' part="section-navbar">
     <slot name="nav-logo" class="logo"></slot>
     ${(this.allowSearch === 'false' && this.allowAdvancedSearch === 'false')
       ? ''
       : html`
-        <div style="display:flex; flex-direction:row; justify-content:center; align-items:stretch; padding:8px 24px 12px 24px; ${this.allowAdvancedSearch === 'false' ? 'border-bottom: 1px solid var(--nav-hover-bg-color)' : ''}">
+        <div style="display:flex; flex-direction:row; justify-content:center; align-items:stretch; padding:8px 12px 12px 12px; ${this.allowAdvancedSearch === 'false' ? 'border-bottom: 1px solid var(--nav-hover-bg-color)' : ''}">
           ${this.allowSearch === 'false'
             ? ''
             : html`
@@ -67,7 +87,7 @@ export default function navbarTemplate() {
               </div>  
               ${this.matchPaths
                 ? html`
-                  <button @click = '${this.onClearSearch}' class="m-btn thin-border" style="margin-left:5px; color:var(--nav-text-color); width:75px; padding:6px 8px;" part="btn btn-outline btn-clear-filter">
+                  <button @click = '${this.onClearSearch}' class="m-btn thin-border" style="margin-left:5px; color:var(--nav-text-color); width:75px; padding:8px 14px;" part="btn btn-outline btn-clear-filter">
                     CLEAR
                   </button>`
                 : ''
@@ -140,88 +160,96 @@ export default function navbarTemplate() {
       </div>
 
       <!-- TAGS AND PATHS-->
-      ${this.resolvedSpec.tags
-        .filter((tag) => tag.paths.filter((path) => pathIsInSearch(this.matchPaths, path, this.matchType)).length)
-        .map((tag) => html`
-          <div class='nav-bar-tag-and-paths ${tag.expanded ? 'expanded' : 'collapsed'}'>
-            ${tag.name === 'General ⦂'
-              ? html`<hr style="border:none; border-top: 1px dotted var(--nav-text-color); opacity:0.3; margin:-1px 0 0 0;"/>`
-              : html`
-                <div 
-                  class='nav-bar-tag' 
-                  id="link-${tag.elementId}" 
-                  data-content-id='${tag.elementId}'
-                  data-first-path-id='${tag.firstPathId}'
-                  @click='${(e) => {
-                    if (this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse') {
-                      onExpandCollapse.call(this, e);
-                    } else {
-                      this.scrollToEventTarget(e, false);
-                    }
-                  }}'
-                >
-                  <div>${tag.name}</div>
-                  <div class="nav-bar-tag-icon" @click="${(e) => {
-                    if (this.renderStyle === 'focused' && this.onNavTagClick === 'show-description') {
-                      onExpandCollapse.call(this, e);
-                    }
-                  }}">
+      ${groupedTags.map(
+        (group) => html`<div>
+          <div style="${group.tags.length === 1 ? 'display:none' : ''}" class="${group.tags.length > 1 ? 'nav-bar-tag' : ''} ">${group.name}</div>
+          <div style="${group.tags.length > 1 ? 'margin-left:1em' : ''}">
+            ${group.tags
+              .filter((tag) => tag.paths.filter((path) => pathIsInSearch(this.matchPaths, path, this.matchType)).length)
+              .map((tag) => html`
+                <div class='nav-bar-tag-and-paths ${tag.expanded ? 'expanded' : 'collapsed'}'>
+                  ${tag.name === 'General ⦂'
+                    ? html`<hr style="border:none; border-top: 1px dotted var(--nav-text-color); opacity:0.3; margin:-1px 0 0 0;"/>`
+                    : html`
+                      <div 
+                        class='nav-bar-tag' 
+                        id="link-${tag.elementId}" 
+                        data-content-id='${tag.elementId}'
+                        data-first-path-id='${tag.firstPathId}'
+                        @click='${(e) => {
+                          if (this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse') {
+                            onExpandCollapse.call(this, e);
+                          } else {
+                            this.scrollToEventTarget(e, false);
+                          }
+                        }}'
+                      >
+                        <div>${tag.name}</div>
+                        <div class="nav-bar-tag-icon" @click="${(e) => {
+                          if (this.renderStyle === 'focused' && this.onNavTagClick === 'show-description') {
+                            onExpandCollapse.call(this, e);
+                          }
+                        }}">
+                        </div>
+                      </div>
+                    `
+                  }
+                  ${(this.infoDescriptionHeadingsInNavBar === 'true')
+                    ? html`
+                      ${this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse'
+                        ? ''
+                        : html`
+                          <div class='tag-headers'>
+                            ${tag.headers.map((header) => html`
+                            <div 
+                              class='nav-bar-h${header.depth}' 
+                              id="link-${tag.elementId}--${new marked.Slugger().slug(header.text)}"  
+                              data-content-id='${tag.elementId}--${new marked.Slugger().slug(header.text)}' 
+                              @click='${(e) => this.scrollToEventTarget(e, false)}'
+                            > ${header.text}</div>`)}
+                          </div>`
+                      }`
+                    : ''
+                  }
+      
+                  
+                  <div class='nav-bar-paths-under-tag'>
+                    <!-- Paths in each tag (endpoints) -->
+                    ${tag.paths.filter((v) => {
+                      if (this.matchPaths) {
+                        return pathIsInSearch(this.matchPaths, v, this.matchType);
+                      }
+                      return true;
+                    }).map((p) => html`
+                    <div 
+                      class='nav-bar-path
+                      ${this.usePathInNavBar === 'true' ? 'small-font' : ''}'
+                      data-content-id='${p.elementId}'
+                      id='link-${p.elementId}'
+                      @click = '${(e) => {
+                        this.scrollToEventTarget(e, false);
+                      }}'
+                    >
+                      <span style = "display:flex; align-items:start; ${p.deprecated ? 'filter:opacity(0.5)' : ''}">
+                        ${html`<span class="nav-method ${this.showMethodInNavBar} ${p.method}">
+                            ${this.showMethodInNavBar === 'as-colored-block' ? p.method.substring(0, 3).toUpperCase() : p.method.toUpperCase()}
+                          </span>`
+                        }
+                        ${p.isWebhook ? html`<span style="font-weight:bold; margin-right:8px; font-size: calc(var(--font-size-small) - 2px)">WEBHOOK</span>` : ''}
+                        ${this.usePathInNavBar === 'true'
+                          ? html`<span class='mono-font'>${p.path}</span>`
+                          : p.summary || p.shortSummary
+                        }
+                      </span>
+                    </div>`)}
                   </div>
                 </div>
-              `
+              `)
             }
-            ${(this.infoDescriptionHeadingsInNavBar === 'true')
-              ? html`
-                ${this.renderStyle === 'focused' && this.onNavTagClick === 'expand-collapse'
-                  ? ''
-                  : html`
-                    <div class='tag-headers'>
-                      ${tag.headers.map((header) => html`
-                      <div 
-                        class='nav-bar-h${header.depth}' 
-                        id="link-${tag.elementId}--${new marked.Slugger().slug(header.text)}"  
-                        data-content-id='${tag.elementId}--${new marked.Slugger().slug(header.text)}' 
-                        @click='${(e) => this.scrollToEventTarget(e, false)}'
-                      > ${header.text}</div>`)}
-                    </div>`
-                }`
-              : ''
-            }
-
-            
-            <div class='nav-bar-paths-under-tag'>
-              <!-- Paths in each tag (endpoints) -->
-              ${tag.paths.filter((v) => {
-                if (this.matchPaths) {
-                  return pathIsInSearch(this.matchPaths, v, this.matchType);
-                }
-                return true;
-              }).map((p) => html`
-              <div 
-                class='nav-bar-path
-                ${this.usePathInNavBar === 'true' ? 'small-font' : ''}'
-                data-content-id='${p.elementId}'
-                id='link-${p.elementId}'
-                @click = '${(e) => {
-                  this.scrollToEventTarget(e, false);
-                }}'
-              >
-                <span style = "display:flex; align-items:start; ${p.deprecated ? 'filter:opacity(0.5)' : ''}">
-                  ${html`<span class="nav-method ${this.showMethodInNavBar} ${p.method}">
-                      ${this.showMethodInNavBar === 'as-colored-block' ? p.method.substring(0, 3).toUpperCase() : p.method.toUpperCase()}
-                    </span>`
-                  }
-                  ${p.isWebhook ? html`<span style="font-weight:bold; margin-right:8px; font-size: calc(var(--font-size-small) - 2px)">WEBHOOK</span>` : ''}
-                  ${this.usePathInNavBar === 'true'
-                    ? html`<span class='mono-font'>${p.path}</span>`
-                    : p.summary || p.shortSummary
-                  }
-                </span>
-              </div>`)}
-            </div>
           </div>
-        `)
-      }
+        </div>`,
+      )}
+     
 
       <!-- COMPONENTS -->
       ${this.resolvedSpec.components && this.showComponents === 'true' && this.renderStyle === 'focused'
